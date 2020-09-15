@@ -27,7 +27,7 @@ typedef struct{
 }traceStats;
 
 
-void compute_hits(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
+void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
     
     reader_init_param_t init_csv = {
         .delimiter=',',
@@ -127,7 +127,7 @@ void compute_hits(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, ch
 }
 
 
-void compute_hits_2(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
+void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
     reader_init_param_t init_csv = {
         .delimiter=',',
         .obj_id_field=1,
@@ -190,9 +190,15 @@ void compute_hits_2(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, 
 }
 int main(int argc, char* argv[]){
 
+    if(argc != 6){
+        printf("Usage: ./new.o <file_name> <tier_1_size> <tier_2_size> <output_file> <incl_excl(0,1)>\n");
+    }
     uint64_t tier_1_size = atoi(argv[2]);
     uint64_t tier_2_size = atoi(argv[3]);
-
-    // compute_hits(argv[1], tier_1_size, tier_2_size, argv[4]);
-    compute_hits_2(argv[1], tier_1_size, tier_2_size, argv[4]);
+    uint64_t incl_excl = atoi(argv[5]);
+    if(incl_excl == 0){
+        inclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
+    }else{
+        exclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
+    }
 }
