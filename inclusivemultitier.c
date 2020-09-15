@@ -1,7 +1,6 @@
 #include<stdio.h>
 #include<libCacheSim.h>
 
-
 typedef struct{
     int tier_1_read_hit;
     int tier_2_read_hit;
@@ -52,7 +51,6 @@ void compute_hits(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, ch
         cache_ck_res_e tier_1_check = tier_1_cache->check(tier_1_cache, req, true);
         cache_ck_res_e tier_2_check = tier_2_cache->check(tier_2_cache, req, true); 
         
-        printf("Request is: %ld, Request type: %d\n", req->obj_id_int, req->op);
         if((tier_1_check == cache_ck_miss) && (tier_2_check == cache_ck_miss)){
             // Condition where the object is not found in both layers.             
             tier_1_cache->get(tier_1_cache, req);
@@ -128,11 +126,73 @@ void compute_hits(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, ch
 
 }
 
+
+void compute_hits_2(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
+    reader_init_param_t init_csv = {
+        .delimiter=',',
+        .obj_id_field=1,
+        .op_field=2,
+        .has_header=false
+    };
+
+    reader_t *reader_csv = open_trace(filename, CSV_TRACE, OBJ_ID_NUM, &init_csv);
+    request_t *req = new_request();
+
+    common_cache_params_t tier_1_params = {.cache_size=tier_1_size};
+    common_cache_params_t tier_2_params = {.cache_size=tier_2_size};
+
+    cache_t *tier_1_cache = create_cache("LRU", tier_1_params, NULL);
+    cache_t *tier_2_cache = create_cache("LRU", tier_2_params, NULL);
+
+    while(read_one_req(reader_csv, req) == 0){
+        cache_ck_res_e tier_1_check = tier_1_cache->check(tier_1_cache, req, true);
+        cache_ck_res_e tier_2_check = tier_2_cache->check(tier_2_cache, req, true); 
+        print_request(req);
+
+        if(unlikely(tier_1_cache->occupied_size < tier_1_cache->cache_size)){
+            if(tier_1_check == cache_ck_hit){
+                printf("Tier 1 cache hit. Size lower.\n");
+                tier_1_cache->get(tier_1_cache, req);
+            }else{
+                printf("Tier 1 cache miss. Size lower.\n");
+                tier_1_cache->get(tier_1_cache, req);
+            } 
+        }else{
+            if(tier_1_check == cache_ck_hit){
+                printf("Tier 1 cache hit. Size higher.\n");
+                tier_1_cache->get(tier_1_cache, req);
+            }else if((tier_1_check == cache_ck_miss) && (tier_2_check == cache_ck_hit)){
+                printf("Tier 1 miss. Tier 2 hit. Size lower.\n");
+                cache_obj_t evicted_object;
+                tier_1_cache->evict(tier_1_cache, req, &evicted_object);
+                tier_1_cache->get(tier_1_cache, req);
+                req->obj_id_int = evicted_object.obj_id_int;
+                req->op = OP_WRITE;
+                tier_2_cache->get(tier_2_cache, req);
+            }else if((tier_1_check == cache_ck_miss) && (tier_1_check == cache_ck_miss)){
+                printf("Miss in both tiers\n");
+                cache_obj_t evicted_object;
+                tier_1_cache->evict(tier_1_cache, req, &evicted_object);
+                tier_1_cache->get(tier_1_cache, req);
+                req->obj_id_int = evicted_object.obj_id_int;
+                req->op = OP_WRITE;
+                tier_2_cache->get(tier_2_cache, req);
+            }    
+        }
+        
+    }
+
+    tier_1_cache->cache_free(tier_1_cache);
+    tier_2_cache->cache_free(tier_2_cache);
+
+    free_request(req);
+    close_reader(reader_csv);
+}
 int main(int argc, char* argv[]){
 
     uint64_t tier_1_size = atoi(argv[2]);
     uint64_t tier_2_size = atoi(argv[3]);
 
-    compute_hits(argv[1], tier_1_size, tier_2_size, argv[4]);
-
+    // compute_hits(argv[1], tier_1_size, tier_2_size, argv[4]);
+    compute_hits_2(argv[1], tier_1_size, tier_2_size, argv[4]);
 }
