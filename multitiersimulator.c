@@ -164,12 +164,12 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
         cache_ck_res_e tier_1_check = tier_1_cache->check(tier_1_cache, req, true);
         cache_ck_res_e tier_2_check = tier_2_cache->check(tier_2_cache, req, true);
         exclusive_stats.total_count++;
-        print_request(req);
+        // print_request(req);
 
         if(unlikely(tier_1_cache->occupied_size < tier_1_cache->cache_size)){
             exclusive_stats.tier_2_not_checked++;
             if(tier_1_check == cache_ck_hit){
-                printf("Tier 1 cache hit. Size lower.\n");
+                // printf("Tier 1 cache hit. Size lower.\n");
                 tier_1_cache->get(tier_1_cache, req);
                 if(req->op == OP_WRITE){
                     exclusive_stats.write_count++;
@@ -180,7 +180,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
                 }
                 exclusive_stats.tier_1_total_hit;
             }else{
-                printf("Tier 1 cache miss. Size lower.\n");
+                // printf("Tier 1 cache miss. Size lower.\n");
                 tier_1_cache->get(tier_1_cache, req);
                 if(req->op == OP_WRITE){
                     exclusive_stats.write_count++;
@@ -193,7 +193,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
         }else{
             if(tier_1_check == cache_ck_hit){
                 exclusive_stats.tier_2_not_checked++;
-                printf("Tier 1 cache hit. Size higher.\n");
+                // printf("Tier 1 cache hit. Size higher.\n");
                 tier_1_cache->get(tier_1_cache, req);
                 if(req->op == OP_WRITE){
                     exclusive_stats.write_count++;
@@ -204,7 +204,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
                 }
                 exclusive_stats.tier_1_total_hit++;
             }else if((tier_1_check == cache_ck_miss) && (tier_2_check == cache_ck_hit)){
-                printf("Tier 1 miss. Tier 2 hit. Size lower.\n");
+                // printf("Tier 1 miss. Tier 2 hit. Size lower.\n");
                 if(req->op == OP_READ){
                     exclusive_stats.read_count++;
                     exclusive_stats.tier_1_read_miss++;
@@ -225,7 +225,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
                 req->op = OP_WRITE;
                 tier_2_cache->get(tier_2_cache, req);
             }else if((tier_1_check == cache_ck_miss) && (tier_1_check == cache_ck_miss)){
-                printf("Tier 1 miss. Tier 2 hit. Size lower.\n");
+                // printf("Tier 1 miss. Tier 2 hit. Size lower.\n");
                 if(req->op == OP_READ){
                     exclusive_stats.read_count++;
                     exclusive_stats.tier_1_read_miss++;
@@ -239,7 +239,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
                     exclusive_stats.tier_1_total_miss++;
                     exclusive_stats.tier_2_total_miss++;                
                 }
-                printf("Miss in both tiers\n");
+                // printf("Miss in both tiers\n");
                 cache_obj_t evicted_object;
                 tier_1_cache->evict(tier_1_cache, req, &evicted_object);
                 tier_1_cache->get(tier_1_cache, req);
