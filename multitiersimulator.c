@@ -31,7 +31,7 @@ typedef struct{
 void write_stat_to_file(char* op_fname, traceStats multi_tier_stats){
     FILE *out_file = fopen(op_fname, "a");
 
-    fprintf(out_file, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", multi_tier_stats.total_count, multi_tier_stats.read_count,
+    fprintf(out_file, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", multi_tier_stats.total_count, multi_tier_stats.read_count,
      multi_tier_stats.write_count, multi_tier_stats.tier_1_read_hit, multi_tier_stats.tier_2_read_hit, multi_tier_stats.tier_1_read_miss, 
      multi_tier_stats.tier_2_read_miss, multi_tier_stats.tier_1_write_hit, multi_tier_stats.tier_2_write_hit, multi_tier_stats.tier_1_write_miss,
      multi_tier_stats.tier_2_write_miss, multi_tier_stats.tier_1_total_hit, multi_tier_stats.tier_2_total_hit, multi_tier_stats.tier_1_total_miss, 
