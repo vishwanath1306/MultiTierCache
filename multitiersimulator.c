@@ -104,7 +104,7 @@ void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_siz
         if((tier_1_check != cache_ck_miss) && (tier_2_check != cache_ck_miss)){
             // Condition where the object is found in both layers. 
             tier_1_cache->get(tier_1_cache, req);
-            tier_2_cache->get(tier_2_cache, req);
+            // tier_2_cache->get(tier_2_cache, req);
 
             if(req->op == OP_READ){
                 multi_tier_stats.tier_1_read_hit++;
