@@ -259,6 +259,27 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
 
     write_stat_to_file(op_fname, exclusive_stats);
 }
+
+void read_file(char* filename){
+    reader_init_param_t init_csv = {
+        .delimiter=',',
+        .obj_id_field=2,
+        .op_field=3,
+        .has_header=false
+    };
+
+    reader_t *reader_csv = open_trace(filename, CSV_TRACE, OBJ_ID_NUM, &init_csv);
+    request_t *req = new_request();
+    int i = 0;
+    while(read_one_req(reader_csv, req) == 0){
+        printf("Sno: %d, Obj: %ld, Op: %d\n", i, req->obj_id_int, req->op);
+        ++i;
+    }
+
+    free_request(req);
+    close_reader(reader_csv);
+}
+
 int main(int argc, char* argv[]){
 
     if(argc != 6){
@@ -267,6 +288,8 @@ int main(int argc, char* argv[]){
     uint64_t tier_1_size = atoi(argv[2]);
     uint64_t tier_2_size = atoi(argv[3]);
     uint64_t incl_excl = atoi(argv[5]);
+
+    read_file(argv[1]);
     if(incl_excl == 0){
         inclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
     }else{
