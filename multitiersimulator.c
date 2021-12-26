@@ -1,32 +1,6 @@
 #include<stdio.h>
 #include<libCacheSim.h>
-
-typedef struct{
-    int tier_1_read_hit;
-    int tier_2_read_hit;
-
-    int tier_1_write_hit;
-    int tier_2_write_hit;
-    
-    int tier_1_read_miss;
-    int tier_2_read_miss;
-
-    int tier_1_write_miss;
-    int tier_2_write_miss;
-    
-    int tier_1_total_hit;
-    int tier_1_total_miss;
-    
-    int tier_2_total_hit;
-    int tier_2_total_miss;
-
-    int read_count;
-    int write_count;
-    int total_count;
-    
-    int tier_2_not_checked; // Only for exclusive caches, if there's a hit in layer 1. 
-}traceStats;
-
+#include "multitiersimulator.h"
 
 void write_stat_to_file(char* op_fname, traceStats multi_tier_stats){
     FILE *out_file = fopen(op_fname, "a");
@@ -104,7 +78,6 @@ void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_siz
         if((tier_1_check != cache_ck_miss) && (tier_2_check != cache_ck_miss)){
             // Condition where the object is found in both layers. 
             tier_1_cache->get(tier_1_cache, req);
-            // tier_2_cache->get(tier_2_cache, req);
 
             if(req->op == OP_READ){
                 multi_tier_stats.tier_1_read_hit++;
@@ -127,15 +100,7 @@ void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_siz
 
     free_request(req);
     close_reader(reader_csv);
-
-    // FILE *out_file = fopen(op_fname, "a");
-    // fprintf(out_file, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", multi_tier_stats.total_count, multi_tier_stats.read_count,
-    //  multi_tier_stats.write_count, multi_tier_stats.tier_1_read_hit, multi_tier_stats.tier_2_read_hit, multi_tier_stats.tier_1_read_miss, 
-    //  multi_tier_stats.tier_2_read_miss, multi_tier_stats.tier_1_write_hit, multi_tier_stats.tier_2_write_hit, multi_tier_stats.tier_1_write_miss,
-    //  multi_tier_stats.tier_2_write_miss, multi_tier_stats.tier_1_total_hit, multi_tier_stats.tier_2_total_hit, multi_tier_stats.tier_1_total_miss, 
-    //  multi_tier_stats.tier_2_total_miss);
-
-    //  fclose(out_file);
+    
     write_stat_to_file(op_fname, multi_tier_stats);
 
 }
@@ -260,6 +225,35 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
     write_stat_to_file(op_fname, exclusive_stats);
 }
 
+
+opTypeStats trace_raw_stats(char *input_filename, uint64_t object_id, uint64_t op_field){
+
+    reader_init_param_t init_csv = {
+        .delimiter=',',
+        .obj_id_field=object_id,
+        .op_field=op_field,
+        .has_header=false
+    };
+
+    opTypeStats file_stats = {0, 0};
+
+    reader_t *reader_csv = open_trace(input_filename, CSV_TRACE, OBJ_ID_NUM, &init_csv);
+    request_t *req = new_request();
+    
+    while (read_one_req(reader_csv, req) == 0){
+        if(req->op == OP_READ){
+            file_stats.read_count++;
+        }
+
+        if(req->op == OP_WRITE){
+
+            file_stats.write_count++;
+        }
+    }
+    
+    return file_stats;
+}
+
 void read_file(char* filename){
     reader_init_param_t init_csv = {
         .delimiter=',',
@@ -280,19 +274,22 @@ void read_file(char* filename){
     close_reader(reader_csv);
 }
 
-int main(int argc, char* argv[]){
+// int main(int argc, char* argv[]){
 
-    if(argc != 6){
-        printf("Usage: ./new.o <file_name> <tier_1_size> <tier_2_size> <output_file> <incl_excl(0,1)>\n");
-    }
-    uint64_t tier_1_size = atoi(argv[2]);
-    uint64_t tier_2_size = atoi(argv[3]);
-    uint64_t incl_excl = atoi(argv[5]);
+//     if(argc != 6){
+//         printf("Usage: ./new.o <file_name> <tier_1_size> <tier_2_size> <output_file> <incl_excl(0,1)>\n");
+//     }
+//     uint64_t tier_1_size = atoi(argv[2]);
+//     uint64_t tier_2_size = atoi(argv[3]);
+//     uint64_t incl_excl = atoi(argv[5]);
 
-    read_file(argv[1]);
-    if(incl_excl == 0){
-        inclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
-    }else{
-        exclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
-    }
-}
+//     // read_file(argv[1]);
+//     opTypeStats values = trace_raw_stats(argv[1], 2, 3);
+//     printf("Read Count is: %d\n", values.read_count);
+//     printf("Write Count is: %d\n", values.write_count);
+//     // if(incl_excl == 0){
+//     //     inclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
+//     // }else{
+//     //     exclusive_caching(argv[1], tier_1_size, tier_2_size, argv[4]);
+//     // }
+// }
