@@ -26,10 +26,9 @@ static PyObject *method_read_write_stats(PyObject *self, PyObject *args){
     }
     
     opTypeStats values = trace_raw_stats(input_filename, object_id, op_field);
-    printf("Read Count is: %d\n", values.read_count);
-    printf("Write Count is: %d\n", values.write_count);
 
-    return Py_None;
+    PyObject * python_val = Py_BuildValue("(ii)", values.read_count, values.write_count);
+    return python_val;
 }
 
 static PyMethodDef BindSimulatorMethod[] = {
