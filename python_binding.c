@@ -31,9 +31,41 @@ static PyObject *method_read_write_stats(PyObject *self, PyObject *args){
     return python_val;
 }
 
+
+static PyObject *method_exclusive_cache(PyObject *self, PyObject *args){
+
+    char *input_filename;
+    uint64_t tier_1_size, tier_2_size, obj_id, op;
+    char * op_filename;
+    ///char *filename, uint64_t tier_1_size, uint64_t tier_2_size, uint64_t obj_id, uint64_t op, char* op_fname
+    if(!PyArg_ParseTuple(args, "siiiis", &input_filename, &tier_1_size, &tier_2_size, &obj_id, &op, &op_filename)){
+        return NULL;
+    }
+
+    traceStats exclusive_stats = exclusive_caching(input_filename, tier_1_size, tier_2_size, obj_id, op);
+
+    bool write_value = write_stat_to_file(op_filename, exclusive_stats);
+
+    char *string1 = "Writing output to file: ";
+    char *string3;
+
+    if(write_value){
+        string3 = malloc(strlen(string1) + strlen(op_filename) + 1);
+        sprintf(string3, "%s %s", string1, op_filename);    
+        return PyUnicode_FromString(string3);
+    }else{
+        char *return_string = "Failed writing to file.";
+        PyObject *return_ = Py_BuildValue("s", return_string); 
+        return return_;
+    }
+    // sprintf("%s %s", string1, op_filename);
+
+}
+
 static PyMethodDef BindSimulatorMethod[] = {
-    {"read_file", method_read_simulator, METH_VARARGS, "Python interface for reading the file"},
-    {"read_write_stats", method_read_write_stats, METH_VARARGS, "Python interface for getting read, write stats"},
+    {"read_file", method_read_simulator, METH_VARARGS, "Python interface for reading the file."},
+    {"read_write_stats", method_read_write_stats, METH_VARARGS, "Python interface for getting read, write stats."},
+    {"exclusive_cache", method_exclusive_cache, METH_VARARGS, "Python interface for exclusive cache."},
     {NULL, NULL, 0, NULL}
 };
 

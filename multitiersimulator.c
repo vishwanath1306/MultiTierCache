@@ -2,9 +2,12 @@
 #include<libCacheSim.h>
 #include "multitiersimulator.h"
 
-void write_stat_to_file(char* op_fname, traceStats multi_tier_stats){
+bool write_stat_to_file(char* op_fname, traceStats multi_tier_stats){
     FILE *out_file = fopen(op_fname, "a");
 
+    if(out_file == NULL){
+        return false;
+    }
     fprintf(out_file, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", multi_tier_stats.total_count, multi_tier_stats.read_count,
      multi_tier_stats.write_count, multi_tier_stats.tier_1_read_hit, multi_tier_stats.tier_2_read_hit, multi_tier_stats.tier_1_read_miss, 
      multi_tier_stats.tier_2_read_miss, multi_tier_stats.tier_1_write_hit, multi_tier_stats.tier_2_write_hit, multi_tier_stats.tier_1_write_miss,
@@ -12,6 +15,8 @@ void write_stat_to_file(char* op_fname, traceStats multi_tier_stats){
      multi_tier_stats.tier_2_total_miss, multi_tier_stats.tier_2_not_checked);
 
     fclose(out_file);
+
+    return true;
 }
 
 void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
@@ -106,11 +111,11 @@ void inclusive_caching(char* filename, uint64_t tier_1_size, uint64_t tier_2_siz
 }
 
 
-void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, char* op_fname){
+traceStats exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_size, uint64_t obj_id, uint64_t op){
     reader_init_param_t init_csv = {
         .delimiter=',',
-        .obj_id_field=1,
-        .op_field=2,
+        .obj_id_field=obj_id,
+        .op_field=op,
         .has_header=false
     };
 
@@ -143,7 +148,7 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
                     exclusive_stats.read_count++;
                     exclusive_stats.tier_1_read_hit++;
                 }
-                exclusive_stats.tier_1_total_hit;
+                exclusive_stats.tier_1_total_hit++;
             }else{
                 // printf("Tier 1 cache miss. Size lower.\n");
                 tier_1_cache->get(tier_1_cache, req);
@@ -222,7 +227,8 @@ void exclusive_caching(char *filename, uint64_t tier_1_size, uint64_t tier_2_siz
     free_request(req);
     close_reader(reader_csv);
 
-    write_stat_to_file(op_fname, exclusive_stats);
+    // write_stat_to_file(op_fname, exclusive_stats);
+    return exclusive_stats;
 }
 
 
